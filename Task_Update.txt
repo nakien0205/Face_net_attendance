@@ -1,0 +1,4 @@
+1. Dùng các thuật toán như CLAHE để xử lý ngược sáng - Processing
+2. Thêm ảnh từ góc trên và ảnh bị chéo, mờ - Processing
+3. Kết nối với Database để truy xuất dữ liệu - Not done
+4. Tạo giao diện - Not done
