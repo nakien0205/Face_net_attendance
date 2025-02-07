@@ -6,21 +6,26 @@ from facenet_pytorch import MTCNN
 import numpy as np
 import pickle
 import logging
-
+from FastMTCNN import FastMTCNN
+import csv
+import atexit
+import time
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Global configurations
-BASE_PATH = 'face_test'  # Base folder containing subfolders for each user
-CACHE_FILE = 'face_encodings_cache.pkl'  # File to save/load precomputed encodings
+BASE_PATH = 'face_test'
+CACHE_FILE = 'face_encodings_cache.pkl'
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-MTCNN_THRESHOLDS = [0.6, 0.7, 0.7]
 CONFIDENCE_THRESHOLD = 0.9
-TOLERANCE = 0.5  # Tolerance for face_recognition.compare_faces
+TOLERANCE = 0.5
+RESIZE_SCALE = 0.5  # Reduce img to 50%
+FRAME_SKIP = 3  #Process every 3 frames to reduce CPU load
+MTCNN_THRESHOLDS = [0.7, 0.8, 0.8] # reduce False Positive but will miss some face
+attendance_record = {}
 
-# Initialize MTCNN for face detection
-mtcnn = MTCNN(device=DEVICE, margin=10, keep_all=True, thresholds=MTCNN_THRESHOLDS)
-
+# Initialize MTCNN for face detection   
+mtcnn = FastMTCNN(device=DEVICE, margin=10, keep_all=False)
 
 def load_known_faces(base_path):
     """
@@ -91,10 +96,12 @@ def load_known_faces_cached(base_path, cache_file):
     return known_encodings, known_names
 
 
+
 def process_frame(frame, known_encodings, known_names, resize_scale=0.25):
     """
     Detects and recognizes faces in the given frame.
     """
+
     # Resize frame for faster processing
     small_frame = cv2.resize(frame, (0, 0), fx=resize_scale, fy=resize_scale)
     rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -117,6 +124,10 @@ def process_frame(frame, known_encodings, known_names, resize_scale=0.25):
                 if best_match_index is not None and matches[best_match_index]:
                     detected_name = known_names[best_match_index]
                     color = (0, 255, 0)
+                    if detected_name not in attendance_record:
+                        current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+                        attendance_record[detected_name] = {'status': 'Present', 'time': current_time}
+
                 else:
                     detected_name = "Unknown"
                     color = (0, 0, 255)
@@ -130,7 +141,19 @@ def process_frame(frame, known_encodings, known_names, resize_scale=0.25):
                 cv2.putText(frame, f"{detected_name} ({prob:.2f})",
                             (x_min * scale_factor, y_min * scale_factor - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+
     return frame
+
+
+
+def save_attendance_csv():
+    """Lưu danh sách điểm danh vào file CSV"""
+    with open("attendance.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Name", "Status", "Time"])
+        for name, info in attendance_record.items():
+            writer.writerow([name, info["status"], info["time"]])
+    print("Danh sách điểm danh đã được lưu vào attendance.csv")
 
 
 def main():
@@ -162,7 +185,11 @@ def main():
     finally:
         cap.release()
         cv2.destroyAllWindows()
+        
 
 
 if __name__ == "__main__":
     main()
+    atexit.register(save_attendance_csv)
+
+
