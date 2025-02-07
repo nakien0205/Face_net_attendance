@@ -147,13 +147,12 @@ def process_frame(frame, known_encodings, known_names, resize_scale=0.25):
 
 
 def save_attendance_csv():
-    """Lưu danh sách điểm danh vào file CSV"""
     with open("attendance.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["Name", "Status", "Time"])
         for name, info in attendance_record.items():
             writer.writerow([name, info["status"], info["time"]])
-    print("Danh sách điểm danh đã được lưu vào attendance.csv")
+    print("Check list is saved in attendance.csv")
 
 
 def main():
