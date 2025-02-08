@@ -14,10 +14,10 @@ import time
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Global configurations
-BASE_PATH = 'face_test'
+BASE_PATH = r'D:\Final\Face_net_attendance\face_test'
 CACHE_FILE = 'face_encodings_cache.pkl'
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-CONFIDENCE_THRESHOLD = 0.9
+CONFIDENCE_THRESHOLD = 0.95
 TOLERANCE = 0.5
 RESIZE_SCALE = 0.5  # Reduce img to 50%
 FRAME_SKIP = 3  #Process every 3 frames to reduce CPU load
@@ -25,7 +25,7 @@ MTCNN_THRESHOLDS = [0.7, 0.8, 0.8] # reduce False Positive but will miss some fa
 attendance_record = {}
 
 # Initialize MTCNN for face detection   
-mtcnn = FastMTCNN(device=DEVICE, margin=10, keep_all=False)
+mtcnn = FastMTCNN(device=DEVICE,factor=0.5, margin=10, keep_all=True)
 
 def load_known_faces(base_path):
     """
